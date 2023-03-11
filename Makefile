@@ -18,23 +18,12 @@ default: compile ## Default to compile
 
 .PHONY: clean
 clean: ## Clean objects
-	rm -vf *exec*
+	cd servers && make clean
 	rm -vf *.o
 	rm -vf *.ll
 
 compile:  ## Compile local code
-	@echo "  ->  Compile Servers"
-	# TCP
-	${CC} functional-server-tcp.c -o functional-server-tcp-exec
-	${CC} dysfunctional-listen-not-accept-tcp.c -o dysfunctional-listen-not-accept-tcp-exec
-
-	# UDS
-	${CC} functional-server-unix.c -o functional-server-unix-exec
-	${CC} dysfunctional-listen-not-accept-unix.c -o dysfunctional-listen-not-accept-unix-exec
-	${CC} dysfunctional-accept-not-read-unix.c -o dysfunctional-accept-not-read-unix-exec
-	${CC} dysfunctional-accept-read-not-write-unix.c -o dysfunctional-accept-read-not-write-unix-exec
-	${CC} dysfunctional-accept-read-write-not-close-unix.c -o dysfunctional-accept-read-write-not-close-unix-exec
-	@echo "  ->  Compile okay!"
+	cd servers && make compile
 
 .PHONY: help
 help:  ## Show help messages for make targets

@@ -13,14 +13,12 @@
 // limitations under the License.
 
 #include <arpa/inet.h>
-#include <sys/un.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-// Note: This needs to match the upstream{} config in nginx.conf
-#define SOCK "/var/run/nginx-proxy-analysis.sock"
+#define PORT 9074
 #define BUFFER_SIZE 1024
 
 int main() {
@@ -30,31 +28,25 @@ int main() {
                 "Content-type: text/html\r\n\r\n"
                 "<html>Nginx Proxy Test Server</html>\r\n";
 
-  // Unlink any preexisting socket.
-  unlink(SOCK);
-
-  // Create a new socket.
-  int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+  // Create a socket
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd == -1) {
     perror("webserver (socket)");
     return 1;
   }
   //printf("socket created successfully\n");
 
-  // Create the unix domain socket addr
-  struct sockaddr_un host_addr;
+  // Create the address to bind the socket to
+  struct sockaddr_in host_addr;
   int host_addrlen = sizeof(host_addr);
 
-  host_addr.sun_family = AF_UNIX;
-  strncpy(host_addr.sun_path, SOCK, sizeof(host_addr.sun_path) - 1);
+  host_addr.sin_family = AF_INET;
+  host_addr.sin_port = htons(PORT);
+  host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-//  host_addr.sin_family = AF_INET;
-//  host_addr.sin_port = htons(PORT);
-//  host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-// Create client address
-struct sockaddr_in client_addr;
-int client_addrlen = sizeof(client_addr);
+  // Create client address
+  struct sockaddr_in client_addr;
+  int client_addrlen = sizeof(client_addr);
 
   // Bind the socket to the address
   if (bind(sockfd, (struct sockaddr *)&host_addr, host_addrlen) != 0) {
@@ -71,7 +63,7 @@ int client_addrlen = sizeof(client_addr);
   //printf("server listening for connections\n");
 
   for (;;) {
-    // No longer accept();
+    // Do not accept() connections
   }
 
   return 0;

@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 // Note: This needs to match the upstream{} config in nginx.conf
-#define SOCK "/var/run/nginx-proxy-analysis.sock"
+#define SOCK "/var/run/snoopkit-server.sock"
 #define BUFFER_SIZE 1024
 
 int main() {

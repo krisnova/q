@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "aya-bpf"
 version = "0.1.0"
-source = "git+https://github.com/aya-rs/aya?branch=main#113e3ef0183acc69202fa6587643449f793cfff8"
+source = "git+https://github.com/aya-rs/aya?tag=aya-log-v0.1.13#832bdd280c19095d79ba2d27281c17f0b09adc15"
 dependencies = [
  "aya-bpf-bindings",
  "aya-bpf-cty",
@@ -16,7 +16,7 @@ dependencies = [
 [[package]]
 name = "aya-bpf-bindings"
 version = "0.1.0"
-source = "git+https://github.com/aya-rs/aya?branch=main#113e3ef0183acc69202fa6587643449f793cfff8"
+source = "git+https://github.com/aya-rs/aya?tag=aya-log-v0.1.13#832bdd280c19095d79ba2d27281c17f0b09adc15"
 dependencies = [
  "aya-bpf-cty",
 ]
@@ -24,12 +24,12 @@ dependencies = [
 [[package]]
 name = "aya-bpf-cty"
 version = "0.2.1"
-source = "git+https://github.com/aya-rs/aya?branch=main#113e3ef0183acc69202fa6587643449f793cfff8"
+source = "git+https://github.com/aya-rs/aya?tag=aya-log-v0.1.13#832bdd280c19095d79ba2d27281c17f0b09adc15"
 
 [[package]]
 name = "aya-bpf-macros"
 version = "0.1.0"
-source = "git+https://github.com/aya-rs/aya?branch=main#113e3ef0183acc69202fa6587643449f793cfff8"
+source = "git+https://github.com/aya-rs/aya?tag=aya-log-v0.1.13#832bdd280c19095d79ba2d27281c17f0b09adc15"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -39,7 +39,7 @@ dependencies = [
 [[package]]
 name = "aya-log-common"
 version = "0.1.13"
-source = "git+https://github.com/aya-rs/aya?branch=main#113e3ef0183acc69202fa6587643449f793cfff8"
+source = "git+https://github.com/aya-rs/aya?tag=aya-log-v0.1.13#832bdd280c19095d79ba2d27281c17f0b09adc15"
 dependencies = [
  "num_enum",
 ]
@@ -47,7 +47,7 @@ dependencies = [
 [[package]]
 name = "aya-log-ebpf"
 version = "0.1.0"
-source = "git+https://github.com/aya-rs/aya?branch=main#113e3ef0183acc69202fa6587643449f793cfff8"
+source = "git+https://github.com/aya-rs/aya?tag=aya-log-v0.1.13#832bdd280c19095d79ba2d27281c17f0b09adc15"
 dependencies = [
  "aya-bpf",
  "aya-log-common",
@@ -57,7 +57,7 @@ dependencies = [
 [[package]]
 name = "aya-log-ebpf-macros"
 version = "0.1.0"
-source = "git+https://github.com/aya-rs/aya?branch=main#113e3ef0183acc69202fa6587643449f793cfff8"
+source = "git+https://github.com/aya-rs/aya?tag=aya-log-v0.1.13#832bdd280c19095d79ba2d27281c17f0b09adc15"
 dependencies = [
  "aya-log-common",
  "aya-log-parser",
@@ -69,7 +69,7 @@ dependencies = [
 [[package]]
 name = "aya-log-parser"
 version = "0.1.11-dev.0"
-source = "git+https://github.com/aya-rs/aya?branch=main#113e3ef0183acc69202fa6587643449f793cfff8"
+source = "git+https://github.com/aya-rs/aya?tag=aya-log-v0.1.13#832bdd280c19095d79ba2d27281c17f0b09adc15"
 dependencies = [
  "aya-log-common",
 ]

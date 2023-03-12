@@ -1,4 +1,4 @@
-# snoopkit
+# q
 
 Surface Linux networking metrics with eBPF
 

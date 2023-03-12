@@ -1,6 +1,6 @@
 
 [workspace]
-members = ["shared", "userspace"]
+members = ["shared", "q"]
 
 [profile.dev]
 opt-level = 3

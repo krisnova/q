@@ -31,7 +31,7 @@ compile: ebpf ## Compile local rust code
 	cargo build --target=x86_64-unknown-linux-musl
 
 install: ## Install into $PATH
-	cargo install --path userspace --target=x86_64-unknown-linux-musl
+	cargo install --path q --target=x86_64-unknown-linux-musl
 
 servers:  ## Compile "servers" code
 	cd servers && make compile

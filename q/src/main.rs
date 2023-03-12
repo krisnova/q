@@ -10,23 +10,18 @@ struct Opt {}
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     let _opt = Opt::parse();
-
     env_logger::init();
 
-    // This will include your eBPF object file as raw bytes at compile-time and load it at
-    // runtime. This approach is recommended for most real-world use cases. If you would
-    // like to specify the eBPF program at runtime rather than at compile-time, you can
-    // reach for `Bpf::load_file` instead.
+    // Compile the eBPF probe directly into the binary
     let mut bpf = Bpf::load(include_bytes_aligned!(
         "../../ebpf/target/bpfel-unknown-none/debug/qprobe"
     ))?;
+    println!("q...");
 
     if let Err(e) = BpfLogger::init(&mut bpf) {
-        // This can happen if you remove all log statements from your eBPF program.
         warn!("failed to initialize eBPF logger: {e}");
     }
-    let program: &mut KProbe =
-        bpf.program_mut("ebpf").unwrap().try_into()?;
+    let program: &mut KProbe = bpf.program_mut("ebpf").unwrap().try_into()?;
     program.load()?;
     program.attach("tcp_connect", 0)?;
 

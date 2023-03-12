@@ -6,9 +6,7 @@
 #[allow(dead_code)]
 // mod binding;
 // use crate::binding::{sock, sock_common};
-use aya_bpf::{
-    helpers::bpf_probe_read_kernel, macros::kprobe, programs::ProbeContext,
-};
+use aya_bpf::{helpers::bpf_probe_read_kernel, macros::kprobe, programs::ProbeContext};
 use aya_log_ebpf::info;
 
 #[link_section = "license"]
@@ -30,6 +28,7 @@ pub fn ebpf(ctx: ProbeContext) -> u32 {
 }
 
 fn try_ebpf(ctx: ProbeContext) -> Result<u32, i64> {
+    // info!(&ctx, "--");
     Ok(0)
     // let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
     // let sk_common = unsafe {

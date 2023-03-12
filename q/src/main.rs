@@ -60,7 +60,7 @@ async fn main() -> Result<(), anyhow::Error> {
     //
     // =============================================================================================
 
-    info!("q: Waiting for Ctrl-C...");
+    info!("Waiting for Ctrl-C...");
     signal::ctrl_c().await?;
     info!("Exiting...");
     Ok(())

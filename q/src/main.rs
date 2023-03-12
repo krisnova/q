@@ -50,7 +50,15 @@ async fn main() -> Result<(), anyhow::Error> {
     //
     // =============================================================================================
 
-    // TODO new kprobe
+    // =============================================================================================
+    // q_inet_csk_accept -> kprobe__inet_csk_accept
+    //
+    let program: &mut KProbe = bpf.program_mut("q_inet_csk_accept").unwrap().try_into()?;
+    program.load()?;
+    program.attach("inet_csk_accept", 0)?;
+    info!(" --> Attached: kprobe__inet_csk_accept");
+    //
+    // =============================================================================================
 
     info!("q: Waiting for Ctrl-C...");
     signal::ctrl_c().await?;

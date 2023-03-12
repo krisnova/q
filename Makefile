@@ -14,7 +14,7 @@
 
 CC       = clang
 
-default: compile ## Default to compile
+default: compile servers ## Default to compile
 
 .PHONY: clean
 clean: ## Clean objects
@@ -22,7 +22,14 @@ clean: ## Clean objects
 	rm -vf *.o
 	rm -vf *.ll
 
-compile:  ## Compile local code
+compile: ## Compile local rust code
+	cargo xtask build-ebpf
+	cargo build
+	@echo "Run the code with:"
+	@echo "  RUST_LOG=info cargo xtask run"
+
+
+servers:  ## Compile "servers" code
 	cd servers && make compile
 
 .PHONY: help

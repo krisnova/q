@@ -13,12 +13,15 @@ use aya_log_ebpf::info;
 #[used]
 pub static LICENSE: [u8; 4] = *b"GPL\0";
 
+// Taken from 6.2 headers /include/linux/socket.h
+// https://github.com/torvalds/linux/blob/v6.2/include/linux/socket.h
 const AF_INET: u16 = 2;
 const AF_INET6: u16 = 10;
 
 #[kprobe(name = "ebpf")]
 pub fn ebpf(ctx: ProbeContext) -> u32 {
-    match try_ebpf(ctx) {
+    // sock_common (tcp_connect)
+    match try_sock_common(ctx) {
         Ok(ret) => ret,
         Err(ret) => match ret.try_into() {
             Ok(rt) => rt,
@@ -27,12 +30,11 @@ pub fn ebpf(ctx: ProbeContext) -> u32 {
     }
 }
 
-fn try_ebpf(ctx: ProbeContext) -> Result<u32, i64> {
+fn try_sock_common(ctx: ProbeContext) -> Result<u32, i64> {
     let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
     let sk_common = unsafe {
         bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
     };
-
     match sk_common.skc_family {
         AF_INET => {
             let src_addr =

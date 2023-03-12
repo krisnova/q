@@ -29,16 +29,21 @@ async fn main() -> Result<(), anyhow::Error> {
     if let Err(e) = BpfLogger::init(&mut bpf) {
         warn!("failed to initialize eBPF logger: {e}");
     }
-    let program: &mut KProbe = bpf.program_mut("ebpf").unwrap().try_into()?;
-    program.load()?;
 
-    // tcp_connect
+    // =============================================================================================
+    // q_tcp_connect -> kprobe__tcp_connect
+    //
+    let program: &mut KProbe = bpf.program_mut("q_tcp_connect").unwrap().try_into()?;
+    program.load()?;
     program.attach("tcp_connect", 0)?;
     info!(" --> Attached: kprobe__tcp_connect");
+    //
+    // =============================================================================================
+
+    // TODO new kprobe
 
     info!("q: Waiting for Ctrl-C...");
     signal::ctrl_c().await?;
     info!("Exiting...");
-
     Ok(())
 }

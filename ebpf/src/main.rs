@@ -18,8 +18,8 @@ pub static LICENSE: [u8; 4] = *b"GPL\0";
 const AF_INET: u16 = 2;
 const AF_INET6: u16 = 10;
 
-#[kprobe(name = "ebpf")]
-pub fn ebpf(ctx: ProbeContext) -> u32 {
+#[kprobe(name = "q_tcp_connect")]
+pub fn q_tcp_connect(ctx: ProbeContext) -> u32 {
     // sock_common (tcp_connect)
     match try_sock_common(ctx) {
         Ok(ret) => ret,

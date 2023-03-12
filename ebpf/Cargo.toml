@@ -1,12 +1,12 @@
 [package]
-name = "qebpf"
+name = "ebpf"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 aya-bpf = { git = "https://github.com/aya-rs/aya", branch = "main" }
 aya-log-ebpf = { git = "https://github.com/aya-rs/aya", branch = "main" }
-qcommon = { path = "../shared" }
+shared = { path = "../shared" }
 
 [[bin]]
 name = "qprobe"

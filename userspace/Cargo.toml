@@ -1,5 +1,5 @@
 [package]
-name = "quserspace"
+name = "userspace"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -9,7 +9,7 @@ aya = { git = "https://github.com/aya-rs/aya", branch = "main", features = [
     "async_tokio",
 ] }
 aya-log = { git = "https://github.com/aya-rs/aya", branch = "main" }
-qcommon = { path = "../shared", features = ["user"] }
+shared = { path = "../shared" }
 anyhow = "1"
 clap = { version = "4.1", features = ["derive"] }
 env_logger = "0.10"
@@ -23,5 +23,5 @@ tokio = { version = "1.25", features = [
 ] }
 
 [[bin]]
-name = "kprobetcp"
+name = "q"
 path = "src/main.rs"

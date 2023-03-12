@@ -1,11 +1,7 @@
 [package]
-name = "qcommon"
+name = "shared"
 version = "0.1.0"
 edition = "2021"
-
-[features]
-default = []
-user = ["aya"]
 
 [dependencies]
 aya = { version = ">=0.11", optional = true }

@@ -1,0 +1,5 @@
+#!/bin/bash
+KVER=$(uname -r)
+HEADERS=$(find /lib/modules/$KVER/build/include/net/ -type f -name '*.h')
+cat $HEADERS > /tmp/linux.h
+bindgen /tmp/linux.h -o src/binding.rs

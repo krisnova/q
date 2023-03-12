@@ -23,11 +23,15 @@ clean: ## Clean objects
 	rm -vf *.o
 	rm -vf *.ll
 
+.PHONY: ebpf
 ebpf: ## Compile eBPF probe code
-	cd qebpf && make compile
+	cd ebpf && make compile
 
 compile: ebpf ## Compile local rust code
 	cargo build
+
+install: ## Install into $PATH
+	cargo install --path userspace
 
 servers:  ## Compile "servers" code
 	cd servers && make compile

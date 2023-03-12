@@ -19,8 +19,14 @@ default: compile ## Default to compile
 .PHONY: clean
 clean: ## Clean objects
 
-compile: ## Compile local eBPF code
+compile: bindings ## Compile local eBPF code
 	cargo build --target=bpfel-unknown-none -Z build-std=core
+
+.PHONY: bindings
+bindings: ## Use aya-tool to build kernel header bindings
+	#cargo install bindgen-cli
+	#cargo install --git https://github.com/aya-rs/aya -- aya-tool
+	aya-tool generate task_struct > src/binding.rs
 
 .PHONY: help
 help:  ## Show help messages for make targets

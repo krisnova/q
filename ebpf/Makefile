@@ -20,7 +20,7 @@ default: compile ## Default to compile
 clean: ## Clean objects
 
 compile: ## Compile local eBPF code
-	cargo +nightly build --target=bpfel-unknown-none -Z build-std=core
+	cargo +nightly build --release --target=bpfel-unknown-none -Z build-std=core
 
 .PHONY: bindings
 bindings: ## Use aya-tool to build kernel header bindings

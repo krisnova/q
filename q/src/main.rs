@@ -19,7 +19,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     // Compile the eBPF probe directly into the binary
     let mut bpf = Bpf::load(include_bytes_aligned!(
-        "../../ebpf/target/bpfel-unknown-none/debug/qprobe"
+        "../../ebpf/target/bpfel-unknown-none/release/qprobe"
     ))?;
     info!("Loaded eBPF probe into kernel");
 

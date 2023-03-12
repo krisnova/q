@@ -39,21 +39,21 @@ fn try_ebpf(ctx: ProbeContext) -> Result<u32, i64> {
                 u32::from_be(unsafe { sk_common.__bindgen_anon_1.__bindgen_anon_1.skc_rcv_saddr });
             let dest_addr: u32 =
                 u32::from_be(unsafe { sk_common.__bindgen_anon_1.__bindgen_anon_1.skc_daddr });
-            // info!(
-            //     &ctx,
-            //     "AF_INET src address: {:ipv4}, dest address: {:ipv4}", src_addr, dest_addr,
-            // );
+            info!(
+                &ctx,
+                "AF_INET src address: {:ipv4}, dest address: {:ipv4}", src_addr, dest_addr,
+            );
             Ok(0)
         }
         AF_INET6 => {
             let src_addr = sk_common.skc_v6_rcv_saddr;
             let dest_addr = sk_common.skc_v6_daddr;
-            // info!(
-            //     &ctx,
-            //     "AF_INET6 src addr: {:ipv6}, dest addr: {:ipv6}",
-            //     unsafe { src_addr.in6_u.u6_addr8 },
-            //     unsafe { dest_addr.in6_u.u6_addr8 }
-            // );
+            info!(
+                &ctx,
+                "AF_INET6 src addr: {:ipv6}, dest addr: {:ipv6}",
+                unsafe { src_addr.in6_u.u6_addr8 },
+                unsafe { dest_addr.in6_u.u6_addr8 }
+            );
             Ok(0)
         }
         _ => Ok(0),

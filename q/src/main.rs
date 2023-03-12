@@ -33,10 +33,20 @@ async fn main() -> Result<(), anyhow::Error> {
     // =============================================================================================
     // q_tcp_connect -> kprobe__tcp_connect
     //
-    let program: &mut KProbe = bpf.program_mut("q_tcp_connect").unwrap().try_into()?;
+    //let program: &mut KProbe = bpf.program_mut("q_tcp_connect").unwrap().try_into()?;
+    //program.load()?;
+    //program.attach("tcp_connect", 0)?;
+    //info!(" --> Attached: kprobe__tcp_connect");
+    //
+    // =============================================================================================
+
+    // =============================================================================================
+    // q_tcp_conn_request -> kprobe__tcp_conn_request
+    //
+    let program: &mut KProbe = bpf.program_mut("q_tcp_conn_request").unwrap().try_into()?;
     program.load()?;
-    program.attach("tcp_connect", 0)?;
-    info!(" --> Attached: kprobe__tcp_connect");
+    program.attach("tcp_conn_request", 0)?;
+    info!(" --> Attached: kprobe__tcp_conn_request");
     //
     // =============================================================================================
 

@@ -28,10 +28,10 @@ ebpf: ## Compile eBPF probe code
 	cd ebpf && make compile
 
 compile: ebpf ## Compile local rust code
-	cargo build
+	cargo build --target=x86_64-unknown-linux-musl
 
 install: ## Install into $PATH
-	cargo install --path userspace
+	cargo install --path userspace --target=x86_64-unknown-linux-musl
 
 servers:  ## Compile "servers" code
 	cd servers && make compile

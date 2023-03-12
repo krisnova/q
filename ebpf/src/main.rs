@@ -45,6 +45,15 @@ pub fn q_tcp_conn_request(ctx: ProbeContext) -> u32 {
 // int tcp_conn_request(struct request_sock_ops *rsk_ops,
 //                      const struct tcp_request_sock_ops *af_ops,
 //                      struct sock *sk, struct sk_buff *skb)
+//
+// Research:
+//
+// Confirmed that this kprobe will execute when a client sends a HTTP
+// request to a server that calls listen() but has not yet accepted()
+// a connection.
+//
+// This is the "entry point" for all new inbound connections "coming off the wire"
+// in the Net Device subsystem (tcpdump and wireshark)
 fn try_tcp_conn_request(ctx: ProbeContext) -> Result<u32, i64> {
     // arg 0 -> struct request_sock_ops *rsk_ops
     // arg 1 -> const struct tcp_request_sock_ops *af_ops

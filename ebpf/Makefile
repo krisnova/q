@@ -14,23 +14,13 @@
 
 CC       = clang
 
-default: compile servers ## Default to compile
+default: compile ## Default to compile
 
 .PHONY: clean
 clean: ## Clean objects
-	cd servers && make clean
-	rm -vrf target/*
-	rm -vf *.o
-	rm -vf *.ll
 
-ebpf: ## Compile eBPF probe code
-	cd qebpf && make compile
-
-compile: ebpf ## Compile local rust code
-	cargo build
-
-servers:  ## Compile "servers" code
-	cd servers && make compile
+compile: ## Compile local eBPF code
+	cargo build --target=bpfel-unknown-none -Z build-std=core
 
 .PHONY: help
 help:  ## Show help messages for make targets

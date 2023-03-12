@@ -1,2 +1,19 @@
+
 [workspace]
-members = ["kprobetcp", "kprobetcp-common", "xtask"]
+members = ["shared", "userspace"]
+
+[profile.dev]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
+lto = true
+panic = "abort"
+incremental = false
+codegen-units = 1
+rpath = false
+
+[profile.release]
+lto = true
+panic = "abort"
+codegen-units = 1

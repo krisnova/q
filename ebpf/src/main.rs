@@ -1,25 +1,26 @@
 #![no_std]
 #![no_main]
-
 #[allow(non_upper_case_globals)]
 #[allow(non_snake_case)]
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
 mod binding;
-
 use crate::binding::{sock, sock_common};
-
 use aya_bpf::{
     helpers::bpf_probe_read_kernel, macros::kprobe, programs::ProbeContext,
 };
 use aya_log_ebpf::info;
 
+#[link_section = "license"]
+#[used]
+pub static LICENSE: [u8; 4] = *b"GPL\0";
+
 const AF_INET: u16 = 2;
 const AF_INET6: u16 = 10;
 
-#[kprobe(name = "kprobetcp")]
-pub fn kprobetcp(ctx: ProbeContext) -> u32 {
-    match try_kprobetcp(ctx) {
+#[kprobe(name = "ebpf")]
+pub fn qebpf(ctx: ProbeContext) -> u32 {
+    match try_qebpf(ctx) {
         Ok(ret) => ret,
         Err(ret) => match ret.try_into() {
             Ok(rt) => rt,
@@ -28,7 +29,7 @@ pub fn kprobetcp(ctx: ProbeContext) -> u32 {
     }
 }
 
-fn try_kprobetcp(ctx: ProbeContext) -> Result<u32, i64> {
+fn try_qebpf(ctx: ProbeContext) -> Result<u32, i64> {
     let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
     let sk_common = unsafe {
         bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common)

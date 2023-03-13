@@ -29,16 +29,6 @@ async fn main() -> Result<(), anyhow::Error> {
     }
 
     // =============================================================================================
-    // q_tcp_connect -> kprobe__tcp_connect
-    //
-    //let program: &mut KProbe = bpf.program_mut("q_tcp_connect").unwrap().try_into()?;
-    //program.load()?;
-    //program.attach("tcp_connect", 0)?;
-    //info!(" --> Attached: kprobe__tcp_connect");
-    //
-    // =============================================================================================
-
-    // =============================================================================================
     // q_tcp_conn_request -> kprobe__tcp_conn_request
     //
     let program: &mut KProbe = bpf.program_mut("q_tcp_conn_request").unwrap().try_into()?;
@@ -51,24 +41,10 @@ async fn main() -> Result<(), anyhow::Error> {
     // =============================================================================================
     // q_inet_csk_accept -> kprobe__inet_csk_accept
     //
-    // let program: &mut KProbe = bpf.program_mut("q_inet_csk_accept").unwrap().try_into()?;
-    // program.load()?;
-    // program.attach("inet_csk_accept", 0)?;
-    // info!(" --> Attached: kprobe__inet_csk_accept");
-    //
-    // =============================================================================================
-
-    //
-    // =============================================================================================
-    // q_tcp_fastopen_queue_check -> kprobe__tcp_fastopen_queue_check
-    //
-    // let program: &mut KProbe = bpf
-    //     .program_mut("q_tcp_fastopen_queue_check")
-    //     .unwrap()
-    //     .try_into()?;
-    // program.load()?;
-    // program.attach("tcp_fastopen_queue_check", 0)?;
-    // info!(" --> Attached: kprobe__tcp_fastopen_queue_check");
+    let program: &mut KProbe = bpf.program_mut("q_inet_csk_accept").unwrap().try_into()?;
+    program.load()?;
+    program.attach("inet_csk_accept", 0)?;
+    info!(" --> Attached: kprobe__inet_csk_accept");
     //
     // =============================================================================================
 

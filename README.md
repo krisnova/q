@@ -1,6 +1,8 @@
 # q
 
-A smol 🤏 static rust binary which can be used to surface kernel queueing and latency metrics.
+A smol 🤏 static rust binary which can be used to surface kernel queueing metrics.
+
+The easiest metrics to surface are anything found in the [sock](https://www.kernel.org/doc/html/v4.16/networking/kapi.html#c.sock) API.
 
 ### Building 
 

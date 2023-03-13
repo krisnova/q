@@ -49,33 +49,6 @@ const AF_INET6: u16 = 10;
 //     - Looks like this is specifically where children are added to TFO
 // - https://github.com/torvalds/linux/blob/v6.2/net/ipv4/tcp_fastopen.c#L296
 //     - Looks like this is a function that is used to check the length
-//
-// Outstanding Work:
-//
-// We need to read the qlen off the inet const struct sock *sk as seen in
-// tcp_fastopen_queue_check()
-//
-// acceptq = &inet_csk(sk)->icsk_accept_queue->qlen
-//
-// and log this (just need to decide where)
-
-// kprobe q_tcp_fastopen_queue_check
-#[kprobe(name = "q_tcp_fastopen_queue_check")]
-pub fn q_tcp_fastopen_queue_check(ctx: ProbeContext) -> u32 {
-    // sock_common (tcp_connect)
-    match try_tcp_fastopen_queue_check(ctx) {
-        Ok(ret) => ret,
-        Err(ret) => match ret.try_into() {
-            Ok(rt) => rt,
-            Err(_) => 1,
-        },
-    }
-}
-
-fn try_tcp_fastopen_queue_check(_ctx: ProbeContext) -> Result<u32, i64> {
-    // TODO
-    Ok(0)
-}
 
 // kretprobe q_inet_csk_accept
 //
@@ -110,9 +83,9 @@ fn try_inet_csk_accept(ctx: ProbeContext) -> Result<u32, i64> {
     };
     let qlen =
         unsafe { bpf_probe_read_kernel(&(*sock).sk_ack_backlog as *const u32).map_err(|e| e)? };
-    let _qmax =
+    let qmax =
         unsafe { bpf_probe_read_kernel(&(*sock).sk_max_ack_backlog as *const u32).map_err(|e| e)? };
-    log_q(ctx, sk_common, qlen);
+    log_q(ctx, sk_common, qlen, qmax);
     Ok(0)
 }
 
@@ -158,15 +131,15 @@ fn try_tcp_conn_request(ctx: ProbeContext) -> Result<u32, i64> {
     };
     let qlen =
         unsafe { bpf_probe_read_kernel(&(*sock).sk_ack_backlog as *const u32).map_err(|e| e)? };
-    let _qmax =
+    let qmax =
         unsafe { bpf_probe_read_kernel(&(*sock).sk_max_ack_backlog as *const u32).map_err(|e| e)? };
-    log_q(ctx, sk_common, qlen);
+    log_q(ctx, sk_common, qlen, qmax);
     Ok(0)
 }
 
 // Generic method to log a queue structure
 #[allow(dead_code)]
-fn log_q(ctx: ProbeContext, sk_common: sock_common, qlen: u32) {
+fn log_q(ctx: ProbeContext, sk_common: sock_common, qlen: u32, qmax: u32) {
     match sk_common.skc_family {
         AF_INET => {
             let src_addr =
@@ -175,8 +148,9 @@ fn log_q(ctx: ProbeContext, sk_common: sock_common, qlen: u32) {
                 u32::from_be(unsafe { sk_common.__bindgen_anon_1.__bindgen_anon_1.skc_daddr });
             info!(
                 &ctx,
-                "AF_INET queue qlen: {} src address: {:ipv4}, dest address: {:ipv4}",
+                "AF_INET 'accept queue' qlen: {}, qmax: {}, src address: {:ipv4}, dest address: {:ipv4}",
                 qlen,
+                qmax,
                 src_addr,
                 dest_addr,
             );
@@ -186,8 +160,9 @@ fn log_q(ctx: ProbeContext, sk_common: sock_common, qlen: u32) {
             let dest_addr = sk_common.skc_v6_daddr;
             info!(
                 &ctx,
-                "AF_INET queue qlen: {} src address: {:ipv4}, dest address: {:ipv4}",
+                "AF_INET6 'accept queue' qlen: {}, qmax: {}, src address: {:ipv4}, dest address: {:ipv4}",
                 qlen,
+                qmax,
                 unsafe { src_addr.in6_u.u6_addr8 },
                 unsafe { dest_addr.in6_u.u6_addr8 }
             );
@@ -222,6 +197,24 @@ fn log_sock(ctx: ProbeContext, sk_common: sock_common) {
         }
         0_u16..=1_u16 | 3_u16..=9_u16 | 11_u16..=u16::MAX => todo!(),
     }
+}
+
+// kprobe q_tcp_fastopen_queue_check
+#[kprobe(name = "q_tcp_fastopen_queue_check")]
+pub fn q_tcp_fastopen_queue_check(ctx: ProbeContext) -> u32 {
+    // sock_common (tcp_connect)
+    match try_tcp_fastopen_queue_check(ctx) {
+        Ok(ret) => ret,
+        Err(ret) => match ret.try_into() {
+            Ok(rt) => rt,
+            Err(_) => 1,
+        },
+    }
+}
+
+fn try_tcp_fastopen_queue_check(_ctx: ProbeContext) -> Result<u32, i64> {
+    // TODO
+    Ok(0)
 }
 
 #[panic_handler]

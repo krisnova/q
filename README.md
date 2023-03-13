@@ -2,7 +2,7 @@
 
 A smol 🤏 static rust binary which can be used to surface kernel queueing metrics with eBPF kprobes.
 
-The easiest metrics to surface are anything found in the [sock](https://www.kernel.org/doc/html/v4.16/networking/kapi.html#c.sock) API.
+The easiest metrics to surface are anything found in the [sock](https://www.kernel.org/doc/html/v6.2/networking/kapi.html#c.sock) API.
 
 The following 'accept queues' are currently instrumented.
 

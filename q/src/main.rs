@@ -11,9 +11,7 @@ struct Opt {}
 async fn main() -> Result<(), anyhow::Error> {
     info!("Initializing 'q'...");
     let _opt = Opt::parse();
-    env_logger::builder()
-        .filter(None, LevelFilter::Trace)
-        .init();
+    env_logger::builder().filter(None, LevelFilter::Info).init();
 
     // Compile the eBPF probe directly into the binary.
     //
@@ -53,10 +51,24 @@ async fn main() -> Result<(), anyhow::Error> {
     // =============================================================================================
     // q_inet_csk_accept -> kprobe__inet_csk_accept
     //
-    let program: &mut KProbe = bpf.program_mut("q_inet_csk_accept").unwrap().try_into()?;
-    program.load()?;
-    program.attach("inet_csk_accept", 0)?;
-    info!(" --> Attached: kprobe__inet_csk_accept");
+    // let program: &mut KProbe = bpf.program_mut("q_inet_csk_accept").unwrap().try_into()?;
+    // program.load()?;
+    // program.attach("inet_csk_accept", 0)?;
+    // info!(" --> Attached: kprobe__inet_csk_accept");
+    //
+    // =============================================================================================
+
+    //
+    // =============================================================================================
+    // q_tcp_fastopen_queue_check -> kprobe__tcp_fastopen_queue_check
+    //
+    // let program: &mut KProbe = bpf
+    //     .program_mut("q_tcp_fastopen_queue_check")
+    //     .unwrap()
+    //     .try_into()?;
+    // program.load()?;
+    // program.attach("tcp_fastopen_queue_check", 0)?;
+    // info!(" --> Attached: kprobe__tcp_fastopen_queue_check");
     //
     // =============================================================================================
 

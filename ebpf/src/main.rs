@@ -5,7 +5,7 @@
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
 mod binding;
-use crate::binding::{sock, sock_common};
+use crate::binding::{sk_buff, sk_buff_head, sock, sock_common};
 use aya_bpf::{helpers::bpf_probe_read_kernel, macros::kprobe, programs::ProbeContext};
 use aya_log_ebpf::info;
 
@@ -44,7 +44,28 @@ const AF_INET6: u16 = 10;
 // acceptq = &inet_csk(sk)->icsk_accept_queue->qlen
 //
 // and log this (just need to decide where)
-//
+
+// q_tcp_fastopen_queue_check
+#[kprobe(name = "q_tcp_fastopen_queue_check")]
+pub fn q_tcp_fastopen_queue_check(ctx: ProbeContext) -> u32 {
+    // sock_common (tcp_connect)
+    match try_tcp_fastopen_queue_check(ctx) {
+        Ok(ret) => ret,
+        Err(ret) => match ret.try_into() {
+            Ok(rt) => rt,
+            Err(_) => 1,
+        },
+    }
+}
+
+fn try_tcp_fastopen_queue_check(ctx: ProbeContext) -> Result<u32, i64> {
+    let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
+    let sk_common = unsafe {
+        bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
+    };
+    log_sock(ctx, sk_common);
+    Ok(0)
+}
 
 // q_inet_csk_accept
 //
@@ -73,11 +94,14 @@ fn try_inet_csk_accept(ctx: ProbeContext) -> Result<u32, i64> {
     // arg 1 -> int flags
     // arg 2 -> int *err
     // arg 3 -> bool kern
-    let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
+    let sock: *mut sock = ctx.arg(2).ok_or(1i64)?;
     let sk_common = unsafe {
         bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
     };
-    log_sock(ctx, sk_common);
+    let skbuff: *mut sk_buff = ctx.arg(3).ok_or(1i64)?;
+    let skb = unsafe { bpf_probe_read_kernel(&(*skbuff) as *const sk_buff).map_err(|e| e)? };
+    let head = unsafe { bpf_probe_read_kernel(skb.head as *const sk_buff_head).map_err(|e| e)? };
+    log_q(ctx, sk_common, head);
     Ok(0)
 }
 
@@ -116,34 +140,77 @@ fn try_tcp_conn_request(ctx: ProbeContext) -> Result<u32, i64> {
     let sk_common = unsafe {
         bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
     };
-    log_sock(ctx, sk_common);
+    let skbuff: *mut sk_buff = ctx.arg(3).ok_or(1i64)?;
+    let skb = unsafe { bpf_probe_read_kernel(&(*skbuff) as *const sk_buff).map_err(|e| e)? };
+    let head = unsafe { bpf_probe_read_kernel(skb.head as *const sk_buff_head).map_err(|e| e)? };
+    log_q(ctx, sk_common, head);
     Ok(0)
 }
 
-// q_tcp_connect
+// Generic method to log a queue structure
 //
-// Example kprobe to be removed or uncalled by 'q'
-// Useful for quickly debugging the eBPF probe functionality
-// as this is an --> outbound TCP connection from the host kernel.
-#[kprobe(name = "q_tcp_connect")]
-pub fn q_tcp_connect(ctx: ProbeContext) -> u32 {
-    // sock_common (tcp_connect)
-    match try_tcp_connect(ctx) {
-        Ok(ret) => ret,
-        Err(ret) => match ret.try_into() {
-            Ok(rt) => rt,
-            Err(_) => 1,
-        },
+// pub struct sk_buff {
+//     pub __bindgen_anon_1: sk_buff__bindgen_ty_1,
+//     pub __bindgen_anon_2: sk_buff__bindgen_ty_2,
+//     pub __bindgen_anon_3: sk_buff__bindgen_ty_3,
+//     pub cb: [::aya_bpf::cty::c_char; 48usize],
+//     pub __bindgen_anon_4: sk_buff__bindgen_ty_4,
+//     pub _nfct: ::aya_bpf::cty::c_ulong,
+//     pub len: ::aya_bpf::cty::c_uint,
+//     pub data_len: ::aya_bpf::cty::c_uint,
+//     pub mac_len: __u16,
+//     pub hdr_len: __u16,
+//     pub queue_mapping: __u16,
+//     pub __cloned_offset: __IncompleteArrayField<__u8>,
+//     pub _bitfield_align_1: [u8; 0],
+//     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 1usize]>,
+//     pub active_extensions: __u8,
+//     pub __bindgen_anon_5: sk_buff__bindgen_ty_5,
+//     pub tail: sk_buff_data_t,
+//     pub end: sk_buff_data_t,
+//     pub head: *mut ::aya_bpf::cty::c_uchar,
+//     pub data: *mut ::aya_bpf::cty::c_uchar,
+//     pub truesize: ::aya_bpf::cty::c_uint,
+//     pub users: refcount_t,
+//     pub extensions: *mut skb_ext,
+// }
+//
+// pub struct sk_buff_head {
+//     pub __bindgen_anon_1: sk_buff_head__bindgen_ty_1,
+//     pub qlen: __u32,
+//     pub lock: spinlock_t,
+// }
+//
+fn log_q(ctx: ProbeContext, sk_common: sock_common, head: sk_buff_head) {
+    match sk_common.skc_family {
+        AF_INET => {
+            let src_addr =
+                u32::from_be(unsafe { sk_common.__bindgen_anon_1.__bindgen_anon_1.skc_rcv_saddr });
+            let dest_addr: u32 =
+                u32::from_be(unsafe { sk_common.__bindgen_anon_1.__bindgen_anon_1.skc_daddr });
+            let qlen: u32 = u32::from_be(head.qlen);
+            info!(
+                &ctx,
+                "AF_INET qlen: {} src address: {:ipv4}, dest address: {:ipv4}",
+                qlen,
+                src_addr,
+                dest_addr,
+            );
+        }
+        AF_INET6 => {
+            let src_addr = sk_common.skc_v6_rcv_saddr;
+            let dest_addr = sk_common.skc_v6_daddr;
+            let qlen: u32 = u32::from_be(head.qlen);
+            info!(
+                &ctx,
+                "AF_INET qlen: {} src address: {:ipv4}, dest address: {:ipv4}",
+                qlen,
+                unsafe { src_addr.in6_u.u6_addr8 },
+                unsafe { dest_addr.in6_u.u6_addr8 }
+            );
+        }
+        0_u16..=1_u16 | 3_u16..=9_u16 | 11_u16..=u16::MAX => todo!(),
     }
-}
-
-fn try_tcp_connect(ctx: ProbeContext) -> Result<u32, i64> {
-    let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
-    let sk_common = unsafe {
-        bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
-    };
-    log_sock(ctx, sk_common);
-    Ok(0)
 }
 
 // Generic method to log a common socket structure
@@ -176,4 +243,30 @@ fn log_sock(ctx: ProbeContext, sk_common: sock_common) {
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     unsafe { core::hint::unreachable_unchecked() }
+}
+
+// q_tcp_connect
+//
+// Example kprobe to be removed or uncalled by 'q'
+// Useful for quickly debugging the eBPF probe functionality
+// as this is an --> outbound TCP connection from the host kernel.
+#[kprobe(name = "q_tcp_connect")]
+pub fn q_tcp_connect(ctx: ProbeContext) -> u32 {
+    // sock_common (tcp_connect)
+    match try_tcp_connect(ctx) {
+        Ok(ret) => ret,
+        Err(ret) => match ret.try_into() {
+            Ok(rt) => rt,
+            Err(_) => 1,
+        },
+    }
+}
+
+fn try_tcp_connect(ctx: ProbeContext) -> Result<u32, i64> {
+    let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
+    let sk_common = unsafe {
+        bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
+    };
+    log_sock(ctx, sk_common);
+    Ok(0)
 }

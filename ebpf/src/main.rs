@@ -28,6 +28,23 @@ const AF_INET6: u16 = 10;
 // [X] tcp_conn_request (inbound)      // New connection received  layer 4
 // [X] inet_csk_accept (inbound)       // accept()                 layer 3
 // -----------------------------------------------------------------------
+//
+// Also areas to consider:
+//
+// - https://github.com/torvalds/linux/blob/v6.2/net/ipv4/tcp_fastopen.c#L238
+//     - Looks like this is specifically where children are added to TFO
+// - https://github.com/torvalds/linux/blob/v6.2/net/ipv4/tcp_fastopen.c#L296
+//     - Looks like this is a function that is used to check the length
+//
+// Outstanding Work:
+//
+// We need to read the qlen off the inet const struct sock *sk as seen in
+// tcp_fastopen_queue_check()
+//
+// acceptq = &inet_csk(sk)->icsk_accept_queue->qlen
+//
+// and log this (just need to decide where)
+//
 
 // q_inet_csk_accept
 //

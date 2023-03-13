@@ -18,6 +18,7 @@ default: compile ## Default to compile
 
 .PHONY: clean
 clean: ## Clean objects
+	rm -rvf target/*
 
 compile: ## Compile local eBPF code
 	cargo +nightly build --release --target=bpfel-unknown-none -Z build-std=core

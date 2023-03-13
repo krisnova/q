@@ -18,6 +18,7 @@ default: compile servers ## Default to compile
 
 .PHONY: clean
 clean: ## Clean objects
+	cd ebpf && make clean
 	cd servers && make clean
 	rm -vrf target/*
 	rm -vf *.o
@@ -33,7 +34,7 @@ compile: ebpf ## Compile local rust code
 install: ## Install into $PATH
 	cargo install --path q --target=x86_64-unknown-linux-musl
 
-servers:  ## Compile "servers" code
+servers: ## Compile "servers" code
 	cd servers && make compile
 
 .PHONY: help

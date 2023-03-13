@@ -59,11 +59,11 @@ pub fn q_tcp_fastopen_queue_check(ctx: ProbeContext) -> u32 {
 }
 
 fn try_tcp_fastopen_queue_check(ctx: ProbeContext) -> Result<u32, i64> {
-    let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
-    let sk_common = unsafe {
-        bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
-    };
-    log_sock(ctx, sk_common);
+    // let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
+    // let sk_common = unsafe {
+    //     bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
+    // };
+    // log_sock(ctx, sk_common);
     Ok(0)
 }
 
@@ -98,10 +98,11 @@ fn try_inet_csk_accept(ctx: ProbeContext) -> Result<u32, i64> {
     let sk_common = unsafe {
         bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
     };
-    let skbuff: *mut sk_buff = ctx.arg(3).ok_or(1i64)?;
-    let skb = unsafe { bpf_probe_read_kernel(&(*skbuff) as *const sk_buff).map_err(|e| e)? };
-    let head = unsafe { bpf_probe_read_kernel(skb.head as *const sk_buff_head).map_err(|e| e)? };
-    log_q(ctx, sk_common, head);
+    let qlen =
+        unsafe { bpf_probe_read_kernel(&(*sock).sk_ack_backlog as *const u32).map_err(|e| e)? };
+    let _qmax =
+        unsafe { bpf_probe_read_kernel(&(*sock).sk_max_ack_backlog as *const u32).map_err(|e| e)? };
+    log_q(ctx, sk_common, qlen);
     Ok(0)
 }
 
@@ -119,6 +120,11 @@ fn try_inet_csk_accept(ctx: ProbeContext) -> Result<u32, i64> {
 //
 // This is the "entry point" for all new inbound connections "coming off the wire"
 // in the Net Device subsystem (tcpdump and wireshark)
+//
+// According to (https://www.kernel.org/doc/html/v4.16/networking/kapi.html)
+// the sock.sk_ack_backlog is the "current listen backlog" which the name
+// corresponds to the TCP states we can expect to find connections in the accept
+// queue.
 #[kprobe(name = "q_tcp_conn_request")]
 pub fn q_tcp_conn_request(ctx: ProbeContext) -> u32 {
     // sock_common (tcp_connect)
@@ -140,10 +146,11 @@ fn try_tcp_conn_request(ctx: ProbeContext) -> Result<u32, i64> {
     let sk_common = unsafe {
         bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
     };
-    let skbuff: *mut sk_buff = ctx.arg(3).ok_or(1i64)?;
-    let skb = unsafe { bpf_probe_read_kernel(&(*skbuff) as *const sk_buff).map_err(|e| e)? };
-    let head = unsafe { bpf_probe_read_kernel(skb.head as *const sk_buff_head).map_err(|e| e)? };
-    log_q(ctx, sk_common, head);
+    let qlen =
+        unsafe { bpf_probe_read_kernel(&(*sock).sk_ack_backlog as *const u32).map_err(|e| e)? };
+    let _qmax =
+        unsafe { bpf_probe_read_kernel(&(*sock).sk_max_ack_backlog as *const u32).map_err(|e| e)? };
+    log_q(ctx, sk_common, qlen);
     Ok(0)
 }
 
@@ -181,17 +188,16 @@ fn try_tcp_conn_request(ctx: ProbeContext) -> Result<u32, i64> {
 //     pub lock: spinlock_t,
 // }
 //
-fn log_q(ctx: ProbeContext, sk_common: sock_common, head: sk_buff_head) {
+fn log_q(ctx: ProbeContext, sk_common: sock_common, qlen: u32) {
     match sk_common.skc_family {
         AF_INET => {
             let src_addr =
                 u32::from_be(unsafe { sk_common.__bindgen_anon_1.__bindgen_anon_1.skc_rcv_saddr });
             let dest_addr: u32 =
                 u32::from_be(unsafe { sk_common.__bindgen_anon_1.__bindgen_anon_1.skc_daddr });
-            let qlen: u32 = u32::from_be(head.qlen);
             info!(
                 &ctx,
-                "AF_INET qlen: {} src address: {:ipv4}, dest address: {:ipv4}",
+                "AF_INET queue qlen: {} src address: {:ipv4}, dest address: {:ipv4}",
                 qlen,
                 src_addr,
                 dest_addr,
@@ -200,10 +206,9 @@ fn log_q(ctx: ProbeContext, sk_common: sock_common, head: sk_buff_head) {
         AF_INET6 => {
             let src_addr = sk_common.skc_v6_rcv_saddr;
             let dest_addr = sk_common.skc_v6_daddr;
-            let qlen: u32 = u32::from_be(head.qlen);
             info!(
                 &ctx,
-                "AF_INET qlen: {} src address: {:ipv4}, dest address: {:ipv4}",
+                "AF_INET queue qlen: {} src address: {:ipv4}, dest address: {:ipv4}",
                 qlen,
                 unsafe { src_addr.in6_u.u6_addr8 },
                 unsafe { dest_addr.in6_u.u6_addr8 }
@@ -223,7 +228,7 @@ fn log_sock(ctx: ProbeContext, sk_common: sock_common) {
                 u32::from_be(unsafe { sk_common.__bindgen_anon_1.__bindgen_anon_1.skc_daddr });
             info!(
                 &ctx,
-                "AF_INET src address: {:ipv4}, dest address: {:ipv4}", src_addr, dest_addr,
+                "AF_INET sock src address: {:ipv4}, dest address: {:ipv4}", src_addr, dest_addr,
             );
         }
         AF_INET6 => {
@@ -231,7 +236,7 @@ fn log_sock(ctx: ProbeContext, sk_common: sock_common) {
             let dest_addr = sk_common.skc_v6_daddr;
             info!(
                 &ctx,
-                "AF_INET6 src addr: {:ipv6}, dest addr: {:ipv6}",
+                "AF_INET6 sock src addr: {:ipv6}, dest addr: {:ipv6}",
                 unsafe { src_addr.in6_u.u6_addr8 },
                 unsafe { dest_addr.in6_u.u6_addr8 }
             );
@@ -263,10 +268,10 @@ pub fn q_tcp_connect(ctx: ProbeContext) -> u32 {
 }
 
 fn try_tcp_connect(ctx: ProbeContext) -> Result<u32, i64> {
-    let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
-    let sk_common = unsafe {
-        bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
-    };
-    log_sock(ctx, sk_common);
+    // let sock: *mut sock = ctx.arg(0).ok_or(1i64)?;
+    // let sk_common = unsafe {
+    //     bpf_probe_read_kernel(&(*sock).__sk_common as *const sock_common).map_err(|e| e)?
+    // };
+    // log_sock(ctx, sk_common);
     Ok(0)
 }
